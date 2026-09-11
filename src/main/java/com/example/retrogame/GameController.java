@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.servlet.http.HttpSession;
+
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -24,19 +26,36 @@ public class GameController {
 
     private final GameRepository repository;
     private final HardwareRepository hardwareRepository;
+    private final UserRepository userRepository;
 
-    public GameController(GameRepository repository, HardwareRepository hardwareRepository) {
+    public GameController(
+            GameRepository repository,
+            HardwareRepository hardwareRepository,
+            UserRepository userRepository) {
+
         this.repository = repository;
         this.hardwareRepository = hardwareRepository;
+        this.userRepository = userRepository;
     }
 
-    @GetMapping
+   @GetMapping
     public List<Game> getGames(
             @RequestParam(required = false, defaultValue = "") String keyword,
             @RequestParam(required = false) Long hardwareId,
-            @RequestParam(required = false, defaultValue = "") String maker) {
+            @RequestParam(required = false, defaultValue = "") String maker,
+            HttpSession session) {
 
-        return repository.search(keyword.trim(), hardwareId, maker);
+        Long userId = (Long) session.getAttribute("userId");
+
+        if (userId == null) {
+            return List.of();
+        }
+
+        return repository.search(
+                keyword.trim(),
+                hardwareId,
+                maker,
+                userId);
     }
 
     @GetMapping("/stats")
@@ -95,9 +114,24 @@ public class GameController {
             @RequestParam(defaultValue = "false") boolean box,
             @RequestParam(defaultValue = "false") boolean manual,
             @RequestParam(required = false) String remarks,
-            @RequestParam(required = false) MultipartFile image) {
+            @RequestParam(required = false) MultipartFile image,
+            HttpSession session) {
 
         Game game = new Game();
+        Long userId = (Long) session.getAttribute("userId");
+
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+        
+        User user = userRepository.findById(userId).orElse(null);
+
+        if (user == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        game.setUser(user);
+
         game.setTitle(title);
         game.setHardware(findHardware(hardwareId));
         game.setMaker(maker);

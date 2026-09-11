@@ -9,23 +9,25 @@ import org.springframework.data.repository.query.Param;
 public interface GameRepository extends JpaRepository<Game, Long> {
 
 	@Query("""
-			SELECT g FROM Game g
-			WHERE (
-			    :keyword = ''
-			    OR LOWER(g.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-			    OR LOWER(COALESCE(g.hardware.name, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
-			    OR LOWER(COALESCE(g.maker, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
-			    OR LOWER(COALESCE(g.genre, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
-			)
-			AND (:hardwareId IS NULL OR g.hardware.id = :hardwareId)
-			AND (:maker = '' OR g.maker = :maker)
-			ORDER BY g.id DESC
-			""")
+	        SELECT g FROM Game g
+	        WHERE (
+	            :keyword = ''
+	            OR LOWER(g.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+	            OR LOWER(COALESCE(g.hardware.name, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+	            OR LOWER(COALESCE(g.maker, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+	            OR LOWER(COALESCE(g.genre, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+	        )
+	        AND (:hardwareId IS NULL OR g.hardware.id = :hardwareId)
+	        AND (:maker = '' OR g.maker = :maker)
+	        AND g.user.id = :userId
+	        ORDER BY g.id DESC
+	        """)
 	
 	List<Game> search(
 	        @Param("keyword") String keyword,
 	        @Param("hardwareId") Long hardwareId,
-	        @Param("maker") String maker);
+	        @Param("maker") String maker,
+	        @Param("userId") Long userId);
 
 	long countByBoxTrue();
 	long countByManualTrue();

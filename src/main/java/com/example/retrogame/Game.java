@@ -55,6 +55,10 @@ public class Game {
     @Column(columnDefinition = "TEXT")
     private String remarks;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+    
     public Game() {
     }
 
@@ -156,5 +160,13 @@ public class Game {
 
     public void setRemarks(String remarks) {
         this.remarks = remarks;
+    }
+    
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }

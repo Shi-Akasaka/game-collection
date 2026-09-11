@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ログイン</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+    <main class="form-main">
+
+        <h1>ログイン</h1>
+
+        <form id="login-form" class="form-card">
+
+            <label for="username">ユーザー名</label>
+            <input id="username" type="text" required>
+
+            <label for="password">パスワード</label>
+            <input id="password" type="password" required>
+
+            <button type="submit">ログイン</button>
+
+        </form>
+
+        <p>
+            アカウントをお持ちでない方はこちら
+        </p>
+
+        <a href="/user-register.html">ユーザー登録</a>
+
+    </main>
+
+    <script>
+        document.getElementById("login-form").addEventListener("submit", async function (event) {
+
+            event.preventDefault();
+
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+			
+			const response = await fetch("/api/login", {
+			    method: "POST",
+			    headers: {
+			        "Content-Type": "application/json"
+			    },
+			    body: JSON.stringify({
+			        username: username,
+			        password: password
+			    })
+			});
+
+			if (response.ok) {
+			    alert("ログインしました");
+			    location.href = "/index.html";
+			} else {
+			    const message = await response.text();
+			    alert(message || "ログインに失敗しました");
+			}
+		});
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,76 @@
+```html
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ユーザー登録</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+    <main class="form-main">
+
+        <h1>ユーザー登録</h1>
+
+        <form id="user-form" class="form-card">
+
+            <label for="username">ユーザー名</label>
+            <input id="username" type="text" required>
+
+            <label for="password">パスワード</label>
+            <input id="password" type="password" required>
+
+            <button type="submit">ユーザー登録</button>
+
+        </form>
+
+        <p>
+            登録済みの方はこちら
+        </p>
+
+        <a href="/login.html">ログイン</a>
+
+    </main>
+
+    <script>
+        document.getElementById("user-form").addEventListener("submit", async function (event) {
+
+            event.preventDefault();
+
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            try {
+                const response = await fetch("/api/users/register", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+
+                if (response.ok) {
+                    alert("ユーザー登録が完了しました");
+                    location.href = "/login.html";
+                } else {
+                    const message = await response.text();
+                    alert(message || "ユーザー登録に失敗しました");
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert("ユーザー登録に失敗しました");
+            }
+        });
+    </script>
+
+</body>
+
+</html>
+```
