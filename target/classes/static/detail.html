@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ゲーム詳細</title>
+
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+<header>
+    <h1>🎮 ゲーム詳細</h1>
+</header>
+
+<main>
+
+    <div id="detail" class="detail-card"></div>
+
+    <div class="detail-actions">
+
+        <a class="button secondary" href="/">一覧へ戻る</a>
+
+        <button class="button" onclick="editGame()">編集</button>
+
+        <button class="button danger" onclick="deleteGame()">削除</button>
+
+    </div>
+
+</main>
+
+<script>
+
+const id = new URLSearchParams(location.search).get("id");
+
+let currentGame = null;
+
+
+/* =========================
+   詳細表示
+========================= */
+
+async function loadDetail() {
+
+    if (!id) {
+        return;
+    }
+
+    const response = await fetch("/api/games/" + id);
+
+    if (!response.ok) {
+
+        document.getElementById("detail").innerHTML =
+            "<p>ゲームが見つかりません。</p>";
+
+        return;
+    }
+
+    currentGame = await response.json();
+
+    showDetail();
+}
+
+
+/* =========================
+   詳細画面を表示
+========================= */
+
+function showDetail() {
+
+    const game = currentGame;
+
+    const image = game.imageData
+        ? `<img class="detail-image"
+                src="/api/games/${game.id}/image"
+                alt="${escapeHtml(game.title)}">`
+        : `<div class="no-image large">画像なし</div>`;
+
+    document.getElementById("detail").innerHTML = `
+
+        ${image}
+
+        <div class="detail-info">
+
+            <h2>${escapeHtml(game.title)}</h2>
+
+            <p>
+                <strong>ハード：</strong>
+                ${escapeHtml(game.hardware ? game.hardware.name : "-")}
+            </p>
+
+            <p>
+                <strong>メーカー：</strong>
+                ${escapeHtml(game.maker || "-")}
+            </p>
+
+            <p>
+                <strong>発売日：</strong>
+                ${escapeHtml(game.releaseDate || "-")}
+            </p>
+
+            <p>
+                <strong>ジャンル：</strong>
+                ${escapeHtml(game.genre || "-")}
+            </p>
+
+            <p>
+                <strong>購入価格：</strong>
+                ${game.price != null
+                    ? game.price.toLocaleString() + "円"
+                    : "-"}
+            </p>
+
+            <p>
+                <strong>購入日：</strong>
+                ${escapeHtml(game.purchaseDate || "-")}
+            </p>
+
+            <p>
+                <strong>箱：</strong>
+                ${game.box ? "あり" : "なし"}
+            </p>
+
+            <p>
+                <strong>説明書：</strong>
+                ${game.manual ? "あり" : "なし"}
+            </p>
+
+            <p>
+                <strong>備考：</strong>
+                ${escapeHtml(game.remarks || "-")}
+            </p>
+
+        </div>
+    `;
+}
+
+
+/* =========================
+   編集画面
+========================= */
+
+async function editGame() {
+
+    const response = await fetch("/api/hardwares");
+
+    if (!response.ok) {
+
+        alert("ハード情報の取得に失敗しました。");
+
+        return;
+    }
+
+    const hardwares = await response.json();
+
+    const game = currentGame;
+
+    let hardwareOptions = `
+        <option value="">選択してください</option>
+    `;
+
+    hardwares.forEach(hardware => {
+
+        hardwareOptions += `
+            <option value="${hardware.id}"
+                ${game.hardware && game.hardware.id === hardware.id
+                    ? "selected"
+                    : ""}>
+                ${escapeHtml(hardware.name)}
+            </option>
+        `;
+    });
+
+
+    document.getElementById("detail").innerHTML = `
+
+        <div class="detail-info">
+
+            <h2>ゲーム情報を編集</h2>
+
+            <div class="form-group">
+
+                <label>タイトル</label>
+
+                <input
+                    type="text"
+                    id="edit-title"
+                    value="${escapeHtml(game.title || "")}"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>ハード</label>
+
+                <select id="edit-hardware">
+
+                    ${hardwareOptions}
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>メーカー</label>
+
+                <input
+                    type="text"
+                    id="edit-maker"
+                    value="${escapeHtml(game.maker || "")}"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>発売日</label>
+
+                <input
+                    type="date"
+                    id="edit-releaseDate"
+                    value="${game.releaseDate || ""}"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>ジャンル</label>
+
+                <input
+                    type="text"
+                    id="edit-genre"
+                    value="${escapeHtml(game.genre || "")}"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>購入価格</label>
+
+                <input
+                    type="number"
+                    id="edit-price"
+                    value="${game.price != null ? game.price : ""}"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>購入日</label>
+
+                <input
+                    type="date"
+                    id="edit-purchaseDate"
+                    value="${game.purchaseDate || ""}"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    <input
+                        type="checkbox"
+                        id="edit-box"
+                        ${game.box ? "checked" : ""}
+                    >
+                    箱あり
+                </label>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    <input
+                        type="checkbox"
+                        id="edit-manual"
+                        ${game.manual ? "checked" : ""}
+                    >
+                    説明書あり
+                </label>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>備考</label>
+
+                <textarea
+                    id="edit-remarks"
+                    rows="5"
+                >${escapeHtml(game.remarks || "")}</textarea>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>画像</label>
+
+                <input
+                    type="file"
+                    id="edit-image"
+                    accept="image/*"
+                >
+
+            </div>
+
+
+            <div class="detail-actions">
+
+                <button
+                    class="button"
+                    onclick="saveGame()">
+                    保存
+                </button>
+
+                <button
+                    class="button secondary"
+                    onclick="showDetail()">
+                    キャンセル
+                </button>
+
+            </div>
+
+        </div>
+    `;
+}
+
+
+/* =========================
+   保存
+========================= */
+
+async function saveGame() {
+
+    const formData = new FormData();
+
+    formData.append(
+        "title",
+        document.getElementById("edit-title").value
+    );
+
+    const hardwareId =
+        document.getElementById("edit-hardware").value;
+
+    if (hardwareId) {
+
+        formData.append("hardwareId", hardwareId);
+
+    }
+
+
+    formData.append(
+        "maker",
+        document.getElementById("edit-maker").value
+    );
+
+    formData.append(
+        "releaseDate",
+        document.getElementById("edit-releaseDate").value
+    );
+
+    formData.append(
+        "genre",
+        document.getElementById("edit-genre").value
+    );
+
+    const price =
+        document.getElementById("edit-price").value;
+
+    if (price) {
+
+        formData.append("price", price);
+
+    }
+
+
+    formData.append(
+        "purchaseDate",
+        document.getElementById("edit-purchaseDate").value
+    );
+
+    formData.append(
+        "box",
+        document.getElementById("edit-box").checked
+    );
+
+    formData.append(
+        "manual",
+        document.getElementById("edit-manual").checked
+    );
+
+    formData.append(
+        "remarks",
+        document.getElementById("edit-remarks").value
+    );
+
+
+    const imageFile =
+        document.getElementById("edit-image").files[0];
+
+    if (imageFile) {
+
+        formData.append("image", imageFile);
+
+    }
+
+
+    const response = await fetch(
+        "/api/games/" + id,
+        {
+            method: "PUT",
+            body: formData
+        }
+    );
+
+
+    if (response.ok) {
+
+        alert("ゲーム情報を更新しました。");
+
+        currentGame = await response.json();
+
+        showDetail();
+
+    } else {
+
+        alert("更新に失敗しました。");
+
+    }
+}
+
+
+/* =========================
+   削除
+========================= */
+
+async function deleteGame() {
+
+    if (!confirm("このゲームを削除しますか？")) {
+
+        return;
+    }
+
+    const response = await fetch(
+        "/api/games/" + id,
+        {
+            method: "DELETE"
+        }
+    );
+
+
+    if (response.ok) {
+
+        alert("削除しました。");
+
+        location.href = "/";
+
+    } else {
+
+        alert("削除に失敗しました。");
+
+    }
+}
+
+
+/* =========================
+   HTMLエスケープ
+========================= */
+
+function escapeHtml(value) {
+
+    return String(value)
+
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+
+/* =========================
+   初期表示
+========================= */
+
+loadDetail();
+
+</script>
+
+</body>
+
+</html>

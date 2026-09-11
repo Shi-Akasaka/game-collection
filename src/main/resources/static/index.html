@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ゲームコレクション一覧</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+<header>
+    <h1>🎮 ゲームコレクション一覧</h1>
+    <p>ゲームを管理しよう</p>
+</header>
+
+<main>
+    <div class="top-actions">
+        <a class="button" href="/stats.html">📊 コレクション集計</a>
+        <a class="button" href="/register.html">＋ ゲームを登録</a>
+    </div>
+
+    <section class="search-box">
+        <input id="keyword" type="text"
+               placeholder="ゲーム名・メーカー・ジャンルで検索">
+
+        <select id="hardwareFilter" aria-label="ハードで絞り込み">
+            <option value="">すべてのハード</option>
+        </select>
+
+        <select id="makerFilter" aria-label="メーカーで絞り込み">
+            <option value="">すべてのメーカー</option>
+        </select>
+
+        <div class="search-buttons">
+            <button onclick="searchGames()">検索</button>
+            <button class="secondary" onclick="clearFilters()">すべて表示</button>
+        </div>
+    </section>
+
+    <p id="count"></p>
+
+    <!-- 並び替えボタン -->
+    <div class="list-header">
+        <div></div>
+		<div class="sort-buttons">
+		    <span onclick="sortGames('asc')">[▲ 昇順]</span>
+		    <span onclick="sortGames('desc')">[▼ 降順]</span>
+		</div>
+    </div>
+
+    <div id="game-list"></div>
+
+</main>
+<script src="/js/index.js"></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>コレクション集計</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header>
+    <h1>📊 コレクション集計</h1>
+    <p>登録したゲームの所持状況を確認</p>
+</header>
+
+<main>
+    <div class="top-actions">
+        <a class="button" href="/index.html">← コレクション一覧</a>
+        <a class="button" href="/register.html">＋ ゲームを登録</a>
+    </div>
+
+    <section class="stats-cards">
+        <div class="stat-card">
+            <span>総ゲーム数</span>
+            <strong id="totalGames">0</strong>
+            <small>本</small>
+        </div>
+        <div class="stat-card">
+            <span>購入金額合計</span>
+            <strong id="totalPrice">0</strong>
+            <small>円</small>
+        </div>
+        <div class="stat-card">
+            <span>箱あり</span>
+            <strong id="boxRate">0</strong>
+            <small>%</small>
+        </div>
+        <div class="stat-card">
+            <span>説明書あり</span>
+            <strong id="manualRate">0</strong>
+            <small>%</small>
+        </div>
+    </section>
+
+    <section class="stats-section">
+        <h2>ハード別の所持本数</h2>
+        <p class="stats-note">登録しているゲームをハードごとに集計しています。0本のハードも表示します。</p>
+        <div id="hardwareStats"></div>
+    </section>
+</main>
+
+<script src="/js/stats.js"></script>
+</body>
+</html>

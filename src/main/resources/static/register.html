@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ゲーム登録</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header>
+    <h1>🎮 ゲーム登録</h1>
+</header>
+
+<main>
+    <form id="game-form" class="form-card" enctype="multipart/form-data">
+			
+		<label>ゲーム名 <span class="required">必須</span>
+				    <input name="title" id="title" required>
+				</label>
+		
+        <label>ハード
+            <select name="hardwareId" id="hardwareId">
+                <option value="">選択してください</option>
+            </select>
+        </label>
+
+        <label>メーカー
+            <input name="maker" placeholder="例：ナムコ">
+        </label>
+
+        <label>発売日
+            <input name="releaseDate" type="date">
+        </label>
+
+        <label>ジャンル
+            <input name="genre" placeholder="例：シューティング">
+        </label>
+
+        <label>購入価格
+            <input name="price" type="number" min="0" placeholder="円">
+        </label>
+
+        <label>購入日
+            <input name="purchaseDate" type="date">
+        </label>
+
+        <div class="checks">
+            <label><input name="box" type="checkbox"> 箱あり</label>
+            <label><input name="manual" type="checkbox"> 説明書あり</label>
+        </div>
+
+        <label>画像
+            <input name="image" type="file" accept="image/*">
+        </label>
+
+        <label>備考
+            <textarea name="remarks" rows="5"></textarea>
+        </label>
+
+        <div class="form-actions">
+            <button type="submit">登録する</button>
+            <a class="button secondary" href="/">戻る</a>
+        </div>
+    </form>
+</main>
+
+<script>
+async function loadHardwares() {
+    const response = await fetch("/api/hardwares");
+    if (!response.ok) return;
+
+    const hardwares = await response.json();
+    const select = document.getElementById("hardwareId");
+
+    hardwares.forEach(hardware => {
+        const option = document.createElement("option");
+        option.value = hardware.id;
+        option.textContent = `${hardware.name}（${hardware.category}）`;
+        select.appendChild(option);
+    });
+}
+
+loadHardwares();
+
+document.getElementById("game-form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    const response = await fetch("/api/games", {
+        method: "POST",
+        body: formData
+    });
+
+    if (response.ok) {
+        alert("ゲームを登録しました");
+        location.href = "/";
+    } else {
+        alert("登録に失敗しました");
+    }
+});
+</script>
+</body>
+</html>
