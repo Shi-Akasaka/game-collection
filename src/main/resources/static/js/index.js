@@ -1,3 +1,15 @@
+async function checkLogin() {
+
+    const response = await fetch("/api/login/check");
+
+    if (!response.ok) {
+        location.href = "/login.html";
+        return false;
+    }
+
+    return true;
+}
+
 let currentGames = [];
 let currentSort = "asc";
 
@@ -164,6 +176,11 @@ function escapeHtml(value) {
 }
 
 (async function init() {
+    const loggedIn = await checkLogin();
+    if (!loggedIn) {
+        return;
+    }
+
     await loadHardwares();
     await loadMakers();
     const urlParams = new URLSearchParams(window.location.search);
@@ -186,3 +203,31 @@ function escapeHtml(value) {
     await loadGames(keyword);
 
 })();
+
+async function logout() {
+
+    alert("ログアウト処理を開始します");
+
+    try {
+
+        const response = await fetch("/api/logout", {
+            method: "POST"
+        });
+
+        if (response.ok) {
+
+            location.href = "/login.html";
+
+        } else {
+
+            alert("ログアウトに失敗しました");
+
+        }
+
+    } catch (error) {
+
+        console.error(error);
+        alert("ログアウト通信でエラーが発生しました");
+
+    }
+}

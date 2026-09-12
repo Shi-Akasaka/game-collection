@@ -8,33 +8,45 @@ import org.springframework.data.repository.query.Param;
 
 public interface GameRepository extends JpaRepository<Game, Long> {
 
-	@Query("""
-	        SELECT g FROM Game g
-	        WHERE (
-	            :keyword = ''
-	            OR LOWER(g.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-	            OR LOWER(COALESCE(g.hardware.name, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
-	            OR LOWER(COALESCE(g.maker, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
-	            OR LOWER(COALESCE(g.genre, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
-	        )
-	        AND (:hardwareId IS NULL OR g.hardware.id = :hardwareId)
-	        AND (:maker = '' OR g.maker = :maker)
-	        AND g.user.id = :userId
-	        ORDER BY g.id DESC
-	        """)
-	
-	List<Game> search(
-	        @Param("keyword") String keyword,
-	        @Param("hardwareId") Long hardwareId,
-	        @Param("maker") String maker,
-	        @Param("userId") Long userId);
+    @Query("""
+            SELECT g FROM Game g
+            WHERE (
+                :keyword = ''
+                OR LOWER(g.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(g.hardware.name, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(g.maker, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(g.genre, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            )
+            AND (:hardwareId IS NULL OR g.hardware.id = :hardwareId)
+            AND (:maker = '' OR g.maker = :maker)
+            AND g.user.id = :userId
+            ORDER BY g.id DESC
+            """)
+    List<Game> search(
+            @Param("keyword") String keyword,
+            @Param("hardwareId") Long hardwareId,
+            @Param("maker") String maker,
+            @Param("userId") Long userId);
 
-	long countByBoxTrue();
-	long countByManualTrue();
+    long countByUserId(Long userId);
 
-	@Query("SELECT COALESCE(SUM(g.price), 0) FROM Game g")
-	Long sumPrice();
+    long countByUserIdAndBoxTrue(Long userId);
 
-	@Query("SELECT g.hardware.id, COUNT(g.id) FROM Game g WHERE g.hardware IS NOT NULL GROUP BY g.hardware.id")
-	List<Object[]> countGroupByHardware();
+    long countByUserIdAndManualTrue(Long userId);
+
+    @Query("""
+            SELECT COALESCE(SUM(g.price), 0)
+            FROM Game g
+            WHERE g.user.id = :userId
+            """)
+    Long sumPriceByUserId(@Param("userId") Long userId);
+
+    @Query("""
+            SELECT g.hardware.id, COUNT(g.id)
+            FROM Game g
+            WHERE g.hardware IS NOT NULL
+            AND g.user.id = :userId
+            GROUP BY g.hardware.id
+            """)
+    List<Object[]> countGroupByHardware(@Param("userId") Long userId);
 }

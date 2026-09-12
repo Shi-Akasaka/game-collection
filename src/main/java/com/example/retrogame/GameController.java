@@ -58,49 +58,85 @@ public class GameController {
                 userId);
     }
 
-    @GetMapping("/stats")
-    public Map<String, Object> getStats() {
-        long totalGames = repository.count();
-        long boxCount = repository.countByBoxTrue();
-        long manualCount = repository.countByManualTrue();
-        long totalPrice = repository.sumPrice() == null ? 0L : repository.sumPrice();
+   @GetMapping("/stats")
+   public Map<String, Object> getStats(HttpSession session) {
 
-        Map<Long, Long> countByHardwareId = new HashMap<>();
-        for (Object[] row : repository.countGroupByHardware()) {
-            countByHardwareId.put((Long) row[0], ((Number) row[1]).longValue());
-        }
+       Long userId = (Long) session.getAttribute("userId");
 
-        List<Map<String, Object>> hardwareCounts = new ArrayList<>();
-        for (Hardware hardware : hardwareRepository.findAllByActiveTrueOrderBySortOrderAsc()) {
-            Map<String, Object> item = new HashMap<>();
-            item.put("id", hardware.getId());
-            item.put("name", hardware.getName());
-            item.put("count", countByHardwareId.getOrDefault(hardware.getId(), 0L));
-            hardwareCounts.add(item);
-        }
+       if (userId == null) {
+           return Map.of();
+       }
 
-        hardwareCounts.sort(Comparator
-                .comparing((Map<String, Object> item) -> ((Number) item.get("count")).longValue())
-                .reversed()
-                .thenComparing(item -> String.valueOf(item.get("name"))));
+       long totalGames = repository.countByUserId(userId);
+       long boxCount = repository.countByUserIdAndBoxTrue(userId);
+       long manualCount = repository.countByUserIdAndManualTrue(userId);
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("totalGames", totalGames);
-        result.put("totalPrice", totalPrice);
-        result.put("boxCount", boxCount);
-        result.put("manualCount", manualCount);
-        result.put("boxRate", totalGames == 0 ? 0 : Math.round(boxCount * 1000.0 / totalGames) / 10.0);
-        result.put("manualRate", totalGames == 0 ? 0 : Math.round(manualCount * 1000.0 / totalGames) / 10.0);
-        result.put("hardwareCounts", hardwareCounts);
-        return result;
-    }
+       Long sumPrice = repository.sumPriceByUserId(userId);
+       long totalPrice = sumPrice == null ? 0L : sumPrice;
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Game> getGame(@PathVariable Long id) {
-        return repository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+       Map<Long, Long> countByHardwareId = new HashMap<>();
+
+       for (Object[] row : repository.countGroupByHardware(userId)) {
+           countByHardwareId.put(
+                   (Long) row[0],
+                   ((Number) row[1]).longValue()
+           );
+       }
+
+       List<Map<String, Object>> hardwareCounts = new ArrayList<>();
+
+       for (Hardware hardware :
+               hardwareRepository.findAllByActiveTrueOrderBySortOrderAsc()) {
+
+           Map<String, Object> item = new HashMap<>();
+
+           item.put("id", hardware.getId());
+           item.put("name", hardware.getName());
+           item.put(
+                   "count",
+                   countByHardwareId.getOrDefault(hardware.getId(), 0L)
+           );
+
+           hardwareCounts.add(item);
+       }
+
+       hardwareCounts.sort(
+               Comparator
+                       .comparing(
+                               (Map<String, Object> item) ->
+                                       ((Number) item.get("count")).longValue()
+                       )
+                       .reversed()
+                       .thenComparing(
+                               item -> String.valueOf(item.get("name"))
+                       )
+       );
+
+       Map<String, Object> result = new HashMap<>();
+
+       result.put("totalGames", totalGames);
+       result.put("totalPrice", totalPrice);
+       result.put("boxCount", boxCount);
+       result.put("manualCount", manualCount);
+
+       result.put(
+               "boxRate",
+               totalGames == 0
+                       ? 0
+                       : Math.round(boxCount * 1000.0 / totalGames) / 10.0
+       );
+
+       result.put(
+               "manualRate",
+               totalGames == 0
+                       ? 0
+                       : Math.round(manualCount * 1000.0 / totalGames) / 10.0
+       );
+
+       result.put("hardwareCounts", hardwareCounts);
+
+       return result;
+   }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Game> createGame(
@@ -174,48 +210,71 @@ public class GameController {
             @RequestParam(defaultValue = "false") boolean box,
             @RequestParam(defaultValue = "false") boolean manual,
             @RequestParam(required = false) String remarks,
-            @RequestParam(required = false) MultipartFile image) {
+            @RequestParam(required = false) MultipartFile image,
+            HttpSession session) {
 
-        return repository.findById(id).map(game -> {
-            game.setTitle(title);
-            game.setHardware(findHardware(hardwareId));
-            game.setMaker(maker);
-            game.setGenre(genre);
-            game.setPrice(price);
-            game.setBox(box);
-            game.setManual(manual);
-            game.setRemarks(remarks);
+        Long userId = (Long) session.getAttribute("userId");
 
-            game.setReleaseDate(
-                    releaseDate == null || releaseDate.isBlank()
-                            ? null : java.time.LocalDate.parse(releaseDate));
-
-            game.setPurchaseDate(
-                    purchaseDate == null || purchaseDate.isBlank()
-                            ? null : java.time.LocalDate.parse(purchaseDate));
-
-            try {
-                if (image != null && !image.isEmpty()) {
-                    game.setImageData(image.getBytes());
-                    game.setImageContentType(image.getContentType());
-                }
-            } catch (Exception e) {
-                return null;
-            }
-
-            return repository.save(game);
-        }).map(ResponseEntity::ok)
-          .orElse(ResponseEntity.notFound().build());
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteGame(@PathVariable Long id) {
-        if (!repository.existsById(id)) {
-            return ResponseEntity.notFound().build();
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
         }
 
-        repository.deleteById(id);
-        return ResponseEntity.noContent().build();
+        return repository.findById(id)
+                .filter(game -> game.getUser() != null
+                        && game.getUser().getId().equals(userId))
+                .map(game -> {
+
+                    game.setTitle(title);
+                    game.setHardware(findHardware(hardwareId));
+                    game.setMaker(maker);
+                    game.setGenre(genre);
+                    game.setPrice(price);
+                    game.setBox(box);
+                    game.setManual(manual);
+                    game.setRemarks(remarks);
+
+                    game.setReleaseDate(
+                            releaseDate == null || releaseDate.isBlank()
+                                    ? null
+                                    : java.time.LocalDate.parse(releaseDate));
+
+                    game.setPurchaseDate(
+                            purchaseDate == null || purchaseDate.isBlank()
+                                    ? null
+                                    : java.time.LocalDate.parse(purchaseDate));
+
+                    try {
+                        if (image != null && !image.isEmpty()) {
+                            game.setImageData(image.getBytes());
+                            game.setImageContentType(image.getContentType());
+                        }
+                    } catch (Exception e) {
+                        return null;
+                    }
+
+                    return repository.save(game);
+
+                })
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Game> getGame(
+            @PathVariable Long id,
+            HttpSession session) {
+
+        Long userId = (Long) session.getAttribute("userId");
+
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        return repository.findById(id)
+                .filter(game -> game.getUser() != null
+                        && game.getUser().getId().equals(userId))
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/{id}/image")
@@ -228,6 +287,27 @@ public class GameController {
                                         ? game.getImageContentType()
                                         : MediaType.APPLICATION_OCTET_STREAM_VALUE))
                         .body(game.getImageData()))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteGame(
+            @PathVariable Long id,
+            HttpSession session) {
+
+        Long userId = (Long) session.getAttribute("userId");
+
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        return repository.findById(id)
+                .filter(game -> game.getUser() != null
+                        && game.getUser().getId().equals(userId))
+                .map(game -> {
+                    repository.delete(game);
+                    return ResponseEntity.noContent().<Void>build();
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 

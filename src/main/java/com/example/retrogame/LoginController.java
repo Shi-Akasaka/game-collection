@@ -3,6 +3,7 @@ package com.example.retrogame;
 import jakarta.servlet.http.HttpSession;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,5 +41,17 @@ public class LoginController {
         session.setAttribute("username", user.getUsername());
 
         return ResponseEntity.ok().body("ログインしました");
+    }
+    
+    @GetMapping("/check")
+    public ResponseEntity<?> checkLogin(HttpSession session) {
+
+        Long userId = (Long) session.getAttribute("userId");
+
+        if (userId == null) {
+            return ResponseEntity.status(401).body("未ログインです");
+        }
+
+        return ResponseEntity.ok().body("ログイン中です");
     }
 }

@@ -65,6 +65,15 @@
 </main>
 
 <script>
+async function checkLogin() {
+    const response = await fetch("/api/login/check");
+    if (!response.ok) {
+        location.href = "/login.html";
+        return false;
+    }
+	    return true;
+}
+
 async function loadHardwares() {
     const response = await fetch("/api/hardwares");
     if (!response.ok) return;
@@ -99,6 +108,14 @@ document.getElementById("game-form").addEventListener("submit", async function(e
         alert("登録に失敗しました");
     }
 });
+
+(async function () {
+    const loggedIn = await checkLogin();
+    if (!loggedIn) {
+        return;
+    }
+})();
+
 </script>
 </body>
 </html>
