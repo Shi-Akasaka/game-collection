@@ -49,5 +49,26 @@
 </main>
 
 <script src="/js/stats.js"></script>
+
+<script>
+    async function checkLogin() {
+        const response = await fetch("/api/login/check");
+        if (!response.ok) {
+            location.href = "/login.html";
+            return false;
+        }
+        return true;
+    }
+
+    (async function () {
+        const loggedIn = await checkLogin();
+        if (!loggedIn) {
+            return;
+        }
+    })();
+</script>
+
+</body>
+</html>
 </body>
 </html>

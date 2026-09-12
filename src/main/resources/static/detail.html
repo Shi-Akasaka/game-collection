@@ -500,10 +500,37 @@ function escapeHtml(value) {
 
 
 /* =========================
+   ログインチェック
+========================= */
+
+async function checkLogin() {
+
+    const response = await fetch("/api/login/check");
+
+    if (!response.ok) {
+        location.href = "/login.html";
+        return false;
+    }
+
+    return true;
+}
+
+
+/* =========================
    初期表示
 ========================= */
 
-loadDetail();
+(async function () {
+
+    const loggedIn = await checkLogin();
+
+    if (!loggedIn) {
+        return;
+    }
+
+    await loadDetail();
+
+})();
 
 </script>
 
